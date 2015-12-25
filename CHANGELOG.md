@@ -2,6 +2,7 @@
  - port from private repo
  - based folder and testing structure on that used by the Pester project
  - adopted "manifest and changelog" and "style rules" policy from Pester project
+ - implement ConvertFrom-7zListStream
 
 ## 0.0.0
 

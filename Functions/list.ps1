@@ -14,7 +14,11 @@ Converts the output of 7z l to a rich object.
                    ValueFromPipeline=$true,
                    ValueFromPipelineByPropertyname=$true)]
         [object[]]
-        $7zListStream
+        $7zListStream,
+
+        # ParentData builds a parent object with objects resultant from parsing of 7zListStream.
+        [switch]
+        $ParentData
     )
     begin
     {
@@ -127,7 +131,12 @@ Converts the output of 7z l to a rich object.
             )
         }
 
-        New-Object psobject -Property $h
+        if ( $ParentData )
+        {
+            return New-Object psobject -Property $h
+        }
+
+        return $h.Files
     }
 }
 function Test-7zVersionNoticeLine

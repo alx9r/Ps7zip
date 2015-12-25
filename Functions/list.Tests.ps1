@@ -6,7 +6,7 @@ Describe ConvertFrom-7zListStream {
             Resolve-Path |
             Import-Clixml
 
-        $r = $stream | ConvertFrom-7zListStream
+        $r = $stream | ConvertFrom-7zListStream -ParentData
 
         $r -is [pscustomobject] | Should be $true
 
@@ -31,6 +31,17 @@ Describe ConvertFrom-7zListStream {
         $stream = 'line 1','line 2'
         {$stream | ConvertFrom-7zListStream} |
             Should throw 'Error parsing 7zListStream.'
+    }
+    It 'outputs list of file attribute objects.' {
+        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample.xml" |
+            Resolve-Path |
+            Import-Clixml
+
+        $r = $stream | ConvertFrom-7zListStream
+
+        $r -is [array] | Should be $true
+        $r.Count | Should be 40
+        $r[0] -is [pscustomobject] | Should be $true
     }
 }
 Describe Test-7zVersionNoticeLine {

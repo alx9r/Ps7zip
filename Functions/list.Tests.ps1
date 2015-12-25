@@ -11,7 +11,9 @@ Describe ConvertFrom-7zListStream {
         $r -is [pscustomobject] | Should be $true
 
         $r.VersionNotice | Should be '7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18'
-        $r.ArchiveNotice | Should be 'Listing archive: .\vcredist_x64.exe'
+        $r.CommandNoticeLine | Should be 'Listing archive: .\vcredist_x64.exe'
+        $r.CommandNotice.Command | Should be 'Listing'
+        $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
 
         $r.AttributeSections.Count | Should be 3
         $r.AttributeSections[0].Attributes.Count | Should be 25
@@ -30,7 +32,7 @@ Describe ConvertFrom-7zListStream {
     It 'throws.' {
         $stream = 'line 1','line 2'
         {$stream | ConvertFrom-7zListStream} |
-            Should throw 'Error parsing 7zListStream.'
+            Should throw 'Error parsing 7zStream.'
     }
     It 'outputs list of file attribute objects.' {
         $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample.xml" |
@@ -42,28 +44,6 @@ Describe ConvertFrom-7zListStream {
         $r -is [array] | Should be $true
         $r.Count | Should be 40
         $r[0] -is [pscustomobject] | Should be $true
-    }
-}
-Describe Test-7zVersionNoticeLine {
-    It 'false.' {
-        $r = 'Not valid.' | Test-7zVersionNoticeLine
-        $r | Should be $false
-    }
-    It 'true.' {
-        $r = '7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18' |
-            Test-7zVersionNoticeLine
-        $r | Should be $true
-    }
-}
-Describe Test-7zArchiveNoticeLine {
-    It 'false.' {
-        $r = 'Not valid.' | Test-7zArchiveNoticeLine
-        $r | Should be $false
-    }
-    It 'true.' {
-        $r = 'Listing archive: setup.exe' |
-            Test-7zArchiveNoticeLine
-        $r | Should be $true
     }
 }
 Describe Test-7zFileListHeadings {

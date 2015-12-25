@@ -1,8 +1,8 @@
-function ConvertFrom-7zListStream
+function ConvertFrom-7zProcessingStream
 {
 <#
 .SYNOPSIS
-Converts the output of 7z l to a rich object.
+Converts the output of 7z e|x to a rich object.
 #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
@@ -34,8 +34,14 @@ Converts the output of 7z l to a rich object.
     end
     {
         $h = @{
-            AttributeSections = [System.Collections.ArrayList]@()
+            MessageNoticeLines = [System.Collections.ArrayList]@()
+            ResultLines = [System.Collections.ArrayList]@()
+            Results = @{}
             Files = [System.Collections.ArrayList]@()
+            Messages = @{
+                Errors = [System.Collections.ArrayList]@()
+                Warnings = [System.Collections.ArrayList]@()
+            }
         }
         $phase = 'find version notice'
         foreach ( $line in $accumulator )
@@ -59,72 +65,75 @@ Converts the output of 7z l to a rich object.
             {
                 $h.CommandNoticeLine = $line
                 $h.CommandNotice = $line | ConvertFrom-7zCommandNoticeLine
-                $phase = 'extract attributes'
+                $phase = 'extract processing line'
                 continue
             }
 
             if
             (
-                $phase -eq 'extract attributes' -and
-                $line -match '^\-+$'
+                $phase -eq 'extract processing line' -and
+                ($line | Test-7zMessageNoticeLine)
             )
             {
-                $h.AttributeSections.Add(
+                $notice = $line | ConvertFrom-7zMessageNoticeLine
+                $h.MessageNoticeLines.Add($line) | Out-Null
+                $h.Messages.$(
                     @{
-                        Attributes = @{}
-                        AttributeLines = [System.Collections.ArrayList]@()
-                    }
-                ) | Out-Null
+                        ERROR = 'Errors'
+                        WARNING = 'Warnings'
+                    }.$($notice.Type)
+                ).Add($notice.Message) |
+                    Out-Null
                 continue
             }
 
             if
             (
-                $phase -eq 'extract attributes' -and
-                ($line | Test-7zAttributeLine)
+                $phase -eq 'extract processing line' -and
+                ($line | Test-7zProcessingLine)
             )
             {
-                $thisSection = $h.AttributeSections[-1]
-                $thisSection.AttributeLines.Add($line) | Out-Null
-                $keyvalue = $line | ConvertFrom-7zAttributeLine
-                $thisSection.Attributes.($keyvalue.Key) = $keyvalue.Value
+                $h.Files.Add(($line | ConvertFrom-7zProcessingLine)) | Out-Null
                 continue
             }
 
             if
             (
-                $phase -eq 'extract attributes' -and
-                ($line | Test-7zFileListHeadings)
+                $phase -eq 'extract processing line' -and
+                ($line | Test-7zProcessingSuccessSummaryLine)
             )
             {
-                $h.FileListHeading = $line
-                $phase = 'extract file list'
+                $h.SummaryLine = $line
+                $h.Summary = 'Success'
+                $phase = 'extract result lines'
+            }
+
+            if
+            (
+                $phase -eq 'extract processing line' -and
+                ($line | Test-7zProcessingFailSummaryLine)
+            )
+            {
+                $h.SummaryLine = $line
+                $h.Summary = 'Failure'
+                $phase = 'failed'
                 continue
             }
 
             if
             (
-                $phase -eq 'extract file list' -and
-                ($line | Test-7zFileListLine)
+                $phase -eq 'extract result lines' -and
+                ($line | Test-7zProcessingResultLine)
             )
             {
-                $h.Files.Add(($line | ConvertFrom-7zFileListLine)) | Out-Null
-                continue
-            }
-
-            if
-            (
-                $phase -eq 'extract file list' -and
-                ($line | Test-7zFileListSummaryLine)
-            )
-            {
-                $h.FileListSummary = $line
-                $phase = 'complete'
+                $result = $line | ConvertFrom-7zProcessingResultLine
+                $h.ResultLines.Add($result) | Out-Null
+                $h.Results.$($result.Key) = $result.Value
                 continue
             }
         }
 
-        if ( $phase -ne 'complete' )
+        if ( $phase -notin 'failed','extract result lines' )
         {
             throw New-Object System.ArgumentException(
                 "Error parsing 7zStream. Ended in phase $phase",
@@ -137,30 +146,20 @@ Converts the output of 7z l to a rich object.
             return New-Object psobject -Property $h
         }
 
+        if ( $h.Messages.Errors )
+        {
+            throw New-Object System.ArgumentException(
+                $h.Messages.Errors[0],
+                '7zStream'
+            )
+        }
+
         return $h.Files
     }
 }
-function Test-7zFileListHeadings
-{
-    [CmdletBinding()]
-    param
-    (
-        [parameter(Mandatory = $true,
-                   Position = 1,
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyname=$true)]
-        [AllowEmptyString()]
-        [string]
-        $Line
-    )
-    process
-    {
-        $Line -match '^ *Date *Time * Attr *Size *Compressed *Name$'
-    }
-}
 
-$attributePattern = '^(?<key>[a-zA-Z0-9 ]*) = (?<value>.*)$'
-function Test-7zAttributeLine
+$processingLinePattern = '^(?<Action>Extracting|Skipping) +(?<Name>.*)$'
+function Test-7zProcessingLine
 {
     [CmdletBinding()]
     param
@@ -175,32 +174,10 @@ function Test-7zAttributeLine
     )
     process
     {
-        $Line -match $attributePattern
+        $Line -match $processingLinePattern
     }
 }
-function ConvertFrom-7zAttributeLine
-{
-    [CmdletBinding()]
-    param
-    (
-        [parameter(Mandatory = $true,
-                   Position = 1,
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyname=$true)]
-        [string]
-        $Line
-    )
-    process
-    {
-        $groups = ([regex]$attributePattern).Match($line).Groups
-        @{
-            Key = [string]$groups['key']
-            Value = [string]$groups['value']
-        }
-    }
-}
-$fileListPattern = '^(?<Date>[0-9\-]+) +(?<Time>[0-9:]+) (?<Attr>[A-Za-z\.]{5}) +(?<Size>[0-9]+) +((?<Compressed>[0-9]*) +)?(?<Name>.*)$'
-function Test-7zFileListLine
+function ConvertFrom-7zProcessingLine
 {
     [CmdletBinding()]
     param
@@ -215,31 +192,14 @@ function Test-7zFileListLine
     )
     process
     {
-        $Line -match $fileListPattern
-    }
-}
-function ConvertFrom-7zFileListLine
-{
-    [CmdletBinding()]
-    param
-    (
-        [parameter(Mandatory = $true,
-                   Position = 1,
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyname=$true)]
-        [string]
-        $Line
-    )
-    process
-    {
-        $groups = ([regex]$fileListPattern).Match($line).Groups
+        $groups = ([regex]$processingLinePattern).Match($Line).Groups
         $h = @{}
-        'Date','Time','Attr','Size','Compressed','Name' |
+        'Action','Name' |
             % { $h.$_ = [string]$groups[$_] }
         New-Object psobject -Property $h
     }
 }
-function Test-7zFileListSummaryLine
+function Test-7zProcessingSuccessSummaryLine
 {
     [CmdletBinding()]
     param
@@ -254,6 +214,65 @@ function Test-7zFileListSummaryLine
     )
     process
     {
-        $Line -match '^ +[0-9]+ +[0-9]+ +[0-9]+ files, [0-9]+ folders$'
+        $Line -match '^Everything is Ok$'
+    }
+}
+function Test-7zProcessingFailSummaryLine
+{
+    [CmdletBinding()]
+    param
+    (
+        [parameter(Mandatory = $true,
+                   Position = 1,
+                   ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyname=$true)]
+        [AllowEmptyString()]
+        [string]
+        $Line
+    )
+    process
+    {
+        $Line -match '^.*Errors:.*$'
+    }
+}
+$processingResultLinePattern = '^(?<Key>.*): +(?<Value>.*)$'
+function Test-7zProcessingResultLine
+{
+    [CmdletBinding()]
+    param
+    (
+        [parameter(Mandatory = $true,
+                   Position = 1,
+                   ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyname=$true)]
+        [AllowEmptyString()]
+        [string]
+        $Line
+    )
+    process
+    {
+        $Line -match $processingResultLinePattern
+    }
+}
+function ConvertFrom-7zProcessingResultLine
+{
+    [CmdletBinding()]
+    param
+    (
+        [parameter(Mandatory = $true,
+                   Position = 1,
+                   ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyname=$true)]
+        [AllowEmptyString()]
+        [string]
+        $Line
+    )
+    process
+    {
+        $groups = ([regex]$processingResultLinePattern).Match($Line).Groups
+        $h = @{}
+        'Key','Value' |
+            % { $h.$_ = [string]$groups[$_] }
+        New-Object psobject -Property $h
     }
 }

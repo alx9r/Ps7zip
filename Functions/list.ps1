@@ -139,42 +139,6 @@ Converts the output of 7z l to a rich object.
         return $h.Files
     }
 }
-function Test-7zVersionNoticeLine
-{
-    [CmdletBinding()]
-    param
-    (
-        [parameter(Mandatory = $true,
-                   Position = 1,
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyname=$true)]
-        [AllowEmptyString()]
-        [string]
-        $Line
-    )
-    process
-    {
-        $Line -match '^7-Zip \[(64|32|86)][0-9\. ]*Copyright \(c\)[0-9,\- ]*Igor Pavlov[0-9\- ]*$'
-    }
-}
-function Test-7zArchiveNoticeLine
-{
-    [CmdletBinding()]
-    param
-    (
-        [parameter(Mandatory = $true,
-                   Position = 1,
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyname=$true)]
-        [AllowEmptyString()]
-        [string]
-        $Line
-    )
-    process
-    {
-        $Line -match '^Listing archive: .*$'
-    }
-}
 function Test-7zFileListHeadings
 {
     [CmdletBinding()]

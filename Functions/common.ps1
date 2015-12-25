@@ -1,3 +1,4 @@
+$versionNoticePattern = '^7-Zip \[(?<Platform>64|32|86)] (?<Version>[0-9a-zA-Z\.]*) *Copyright \(c\) +(?<CopyrightDate>[0-9,\-]*) +Igor Pavlov +(?<Date>[0-9\-]*).*$'
 function Test-7zVersionNoticeLine
 {
     [CmdletBinding()]
@@ -13,7 +14,29 @@ function Test-7zVersionNoticeLine
     )
     process
     {
-        $Line -match '^7-Zip \[(64|32|86)][0-9\. ]*Copyright \(c\)[0-9,\- ]*Igor Pavlov[0-9\- ]*$'
+        $Line -match $versionNoticePattern
+    }
+}
+function ConvertFrom-7zVersionNoticeLine
+{
+    [CmdletBinding()]
+    param
+    (
+        [parameter(Mandatory = $true,
+                   Position = 1,
+                   ValueFromPipeline=$true,
+                   ValueFromPipelineByPropertyname=$true)]
+        [AllowEmptyString()]
+        [string]
+        $Line
+    )
+    process
+    {
+        $groups = ([regex]$versionNoticePattern).Match($Line).Groups
+        $h = @{}
+        'Platform','Version','CopyrightDate','Date' |
+            % { $h.$_ = [string]$groups[$_] }
+        New-Object psobject -Property $h
     }
 }
 $commandNoticePattern = '^(?<Command>Listing|Processing) archive: (?<ArchiveName>.*)$'

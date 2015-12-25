@@ -11,6 +11,20 @@ Describe Test-7zVersionNoticeLine {
         $r | Should be $true
     }
 }
+Describe ConvertFrom-7zVersionNoticeLine {
+    It 'correctly extracts fields.' {
+        $r = '7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18' |
+            ConvertFrom-7zVersionNoticeLine
+
+        $r -is [pscustomobject] | Should be $true
+
+        $r.Platform | Should be '64'
+        $r.Version | Should be '9.20'
+        $r.CopyrightDate | Should be '1999-2010'
+        $r.Date | Should be '2010-11-18'
+    }
+}
+
 Describe Test-7zCommandNoticeLine {
     It 'false.' {
         $r = 'Not valid.' | Test-7zCommandNoticeLine

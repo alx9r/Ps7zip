@@ -102,7 +102,7 @@ Describe Test-7zFileListLine {
     }
 }
 Describe ConvertFrom-7zFileListLine {
-    It 'correctly extracts key and value.' {
+    It 'correctly extracts fields.' {
         $r = '2014-05-29 15:19:35 ....A      4249928      1516467  setup.exe' |
             ConvertFrom-7zFileListLine
 

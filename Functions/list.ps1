@@ -14,9 +14,9 @@ Converts the output of 7z l to a rich object.
                    ValueFromPipeline=$true,
                    ValueFromPipelineByPropertyname=$true)]
         [object[]]
-        $7zListStream,
+        $7zStream,
 
-        # ParentData builds a parent object with objects resultant from parsing of 7zListStream.
+        # ParentData builds a parent object with objects resultant from parsing of 7zStream.
         [switch]
         $ParentData
     )
@@ -26,7 +26,7 @@ Converts the output of 7z l to a rich object.
     }
     process
     {
-        $7zListStream |
+        $7zStream |
             % {
                 $accumulator.Add($_) | Out-Null
             }
@@ -47,17 +47,18 @@ Converts the output of 7z l to a rich object.
             )
             {
                 $h.VersionNotice = $line
-                $phase = 'find archive notice'
+                $phase = 'find command notice'
                 continue
             }
 
             if
             (
-                $phase -eq 'find archive notice' -and
-                ($line | Test-7zArchiveNoticeLine)
+                $phase -eq 'find command notice' -and
+                ($line | Test-7zCommandNoticeLine)
             )
             {
-                $h.ArchiveNotice = $line
+                $h.CommandNoticeLine = $line
+                $h.CommandNotice = $line | ConvertFrom-7zCommandNoticeLine
                 $phase = 'extract attributes'
                 continue
             }
@@ -126,8 +127,8 @@ Converts the output of 7z l to a rich object.
         if ( $phase -ne 'complete' )
         {
             throw New-Object System.ArgumentException(
-                "Error parsing 7zListStream. Ended in phase $phase",
-                '7zListStream'
+                "Error parsing 7zStream. Ended in phase $phase",
+                '7zStream'
             )
         }
 

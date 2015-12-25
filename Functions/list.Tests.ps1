@@ -11,7 +11,9 @@ Describe ConvertFrom-7zListStream {
         $r -is [pscustomobject] | Should be $true
 
         $r.VersionNotice | Should be '7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18'
-        $r.ArchiveNotice | Should be 'Listing archive: .\vcredist_x64.exe'
+        $r.CommandNoticeLine | Should be 'Listing archive: .\vcredist_x64.exe'
+        $r.CommandNotice.Command | Should be 'Listing'
+        $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
 
         $r.AttributeSections.Count | Should be 3
         $r.AttributeSections[0].Attributes.Count | Should be 25
@@ -30,7 +32,7 @@ Describe ConvertFrom-7zListStream {
     It 'throws.' {
         $stream = 'line 1','line 2'
         {$stream | ConvertFrom-7zListStream} |
-            Should throw 'Error parsing 7zListStream.'
+            Should throw 'Error parsing 7zStream.'
     }
     It 'outputs list of file attribute objects.' {
         $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample.xml" |

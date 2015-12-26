@@ -5,7 +5,6 @@ function ConvertFrom-7zProcessingStream
 Converts the output of 7z e|x to a rich object.
 #>
     [CmdletBinding()]
-    [OutputType([pscustomobject])]
     param
     (
         # The stream object output by 7z when invoked from PowerShell.

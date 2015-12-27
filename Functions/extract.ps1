@@ -290,10 +290,27 @@ function Get-7zExtractArgs
         [parameter(Position = 2,
                    ValueFromPipelineByPropertyname=$true)]
         [string[]]
-        $Files
+        $Files,
+
+        [parameter(Position = 3,
+                   ValueFromPipelineByPropertyname=$true)]
+        [string[]]
+        $OutputFolder
     )
     process
     {
-        "x $ArchivePath$(if($Files){' -i!'})$($Files -join ' -i!')"
+        "x $ArchivePath$(
+                if ( $OutputFolder )
+                {
+                    " -o$OutputFolder"
+                }
+            )$(
+                if ( $Files )
+                {
+                    ' -i!'
+                }
+            )$(
+                $Files -join ' -i!'
+            )"
     }
 }

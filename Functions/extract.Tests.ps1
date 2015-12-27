@@ -117,4 +117,13 @@ Describe Get-7zExtractArgs {
 
         $r | Should be 'x archive.zip -i!file1.txt -i!file2.txt'
     }
+    It 'OutputFolder' {
+        $splat = @{
+            ArchivePath = 'archive.zip'
+            OutputFolder = 'out'
+        }
+        $r = Get-7zExtractArgs @splat
+
+        $r | Should be 'x archive.zip -oout'
+    }
 }

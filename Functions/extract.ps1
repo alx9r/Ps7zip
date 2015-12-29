@@ -26,9 +26,8 @@ Converts the output of 7z e|x to a rich object.
     process
     {
         $7zStream |
-            % {
-                $accumulator.Add($_) | Out-Null
-            }
+            % { ([string]$_).Split(("`r`n","`n"),[System.StringSplitOptions]::None) } |
+            % { $accumulator.Add($_) | Out-Null }
     }
     end
     {

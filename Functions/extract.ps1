@@ -275,25 +275,3 @@ function ConvertFrom-7zProcessingResultLine
         New-Object psobject -Property $h
     }
 }
-function Get-7zExtractArgs
-{
-    [CmdletBinding()]
-    param
-    (
-        [parameter(Mandatory = $true,
-                   Position = 1,
-                   ValueFromPipeline=$true,
-                   ValueFromPipelineByPropertyname=$true)]
-        [string]
-        $ArchivePath,
-
-        [parameter(Position = 2,
-                   ValueFromPipelineByPropertyname=$true)]
-        [string[]]
-        $Files
-    )
-    process
-    {
-        "x $ArchivePath$(if($Files){' -i!'})$($Files -join ' -i!')"
-    }
-}

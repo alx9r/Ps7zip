@@ -121,3 +121,15 @@ function ConvertFrom-7zMessageNoticeLine
         New-Object psobject -Property $h
     }
 }
+function Get-7zSupportedArchives
+{
+    [CmdletBinding()]
+    param()
+    process
+    {
+        '7z','XZ','ZIP','GZIP','BZIP2','TAR','WIM','LZMA',
+        'RAR','CAB','ARJ','Z','CPIO','RPM','DEB','LZH',
+        'SPLIT','CHM','ISO','UDF','COMPOUND','DMG','XAR',
+        'HFS','NSIS','NTFS','FAT','VHD','MBR','SquashFS','CramFS'
+    }
+}

@@ -18,7 +18,7 @@ function Find-7zCommandPath
         {
             try
             {
-                return Get-Command $candidate -ErrorAction Stop
+                return (Get-Command $candidate -ErrorAction Stop).Path
             }
             catch {}
         }

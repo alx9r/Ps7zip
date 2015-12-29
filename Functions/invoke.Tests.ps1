@@ -6,14 +6,16 @@ InModuleScope Ps7zip {
             Mock Get-Command {
                 if ($Name -eq "$Env:ProgramFiles\7-Zip\7z.exe")
                 {
-                    return 'command object'
+                    return @{
+                        Path = 'commandpath'
+                    }
                 }
                 throw
             }
             It 'returns command object' {
                 $r = Find-7zCommandPath
 
-                $r | Should be 'command object'
+                $r | Should be 'commandpath'
             }
         }
         Context 'throws' {

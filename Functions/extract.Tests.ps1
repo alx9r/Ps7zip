@@ -102,28 +102,3 @@ Describe ConvertFrom-7zProcessingResultLine {
         $r.Value | Should be '4104207'
     }
 }
-Describe Get-7zExtractArgs {
-    It 'no Files' {
-        $r = Get-7zExtractArgs 'archive.zip'
-
-        $r | Should be 'x archive.zip'
-    }
-    It 'Files' {
-        $splat = @{
-            ArchivePath = 'archive.zip'
-            Files = 'file1.txt','file2.txt'
-        }
-        $r = Get-7zExtractArgs @splat
-
-        $r | Should be 'x archive.zip -i!file1.txt -i!file2.txt'
-    }
-    It 'OutputFolder' {
-        $splat = @{
-            ArchivePath = 'archive.zip'
-            OutputFolder = 'out'
-        }
-        $r = Get-7zExtractArgs @splat
-
-        $r | Should be 'x archive.zip -oout'
-    }
-}

@@ -1,4 +1,25 @@
-function Assert-Valid7zExtractArgsParams
+$commandCharLookup = @{
+    a = 'a'
+    Add = 'a'
+    b = 'b'
+    Benchmark = 'b'
+    e = 'e'
+    Extract = 'e'
+    l = 'l'
+    List = 'l'
+    t = 't'
+    Test = 't'
+    u = 'u'
+    Update = 'u'
+    x = 'x'
+    'eXtract with full paths' = 'x'
+}
+$commandSwitchLookup = @{
+    'x' = 'ai','an','ao','ax','i','o','p','r','so','t','x','y'
+    'e' = 'ai','an','ao','ax','i','o','p','r','so','t','x','y'
+    'l' = 'ai','an','ax','i','slt','p','r','t','x'
+}
+function Assert-Valid7zArgsParams
 {
     [CmdletBinding()]
     param
@@ -6,9 +27,11 @@ function Assert-Valid7zExtractArgsParams
         [parameter(Mandatory                      =$true,
                    Position                       =1,
                    ValueFromPipelineByPropertyname=$true)]
-        [char]
-        [ValidateSet('e','x')]
-        $Mode,
+        [string]
+        [ValidateSet('e','Extract',
+                     'x','eXtract with full paths',
+                     'l','List')]
+        $Command,
 
         [parameter(Position                       =2,
                    ValueFromPipelineByPropertyname=$true)]
@@ -65,6 +88,11 @@ function Assert-Valid7zExtractArgsParams
         [string[]]
         [Alias('so')]
         $WriteDataToStdout,
+
+        [parameter(ValueFromPipelineByPropertyname=$true)]
+        [switch]
+        [Alias('slt')]
+        $ShowTechnicalInfo,
 
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [string]
@@ -106,9 +134,32 @@ function Assert-Valid7zExtractArgsParams
                 )
             }
         }
+
+        $paramAliases = (Get-Command Get-7zArgs).Parameters.Values |
+            ? {
+                $_.Name -notin [System.Management.Automation.PSCmdlet]::CommonParameters -and
+                $_.Name -notin 'Command','ArchivePath' -and
+                (Get-Variable $_.Name -ValueOnly)
+            } |
+            % { $_.Aliases[0] }
+
+        foreach ( $paramAlias in $paramAliases )
+        {
+            if
+            (
+                ($paramAlias -replace '[^a-z]*') -notin
+                $commandSwitchLookup.$($commandCharLookup.$Command)
+            )
+            {
+                throw New-Object System.ArgumentException(
+                    "Parameter $paramAlias is not valid for $Command command.",
+                    $paramAlias
+                )
+            }
+        }
     }
 }
-function Get-7zExtractArgs
+function Get-7zArgs
 {
     [CmdletBinding()]
     param
@@ -116,9 +167,11 @@ function Get-7zExtractArgs
         [parameter(Mandatory                      =$true,
                    Position                       =1,
                    ValueFromPipelineByPropertyname=$true)]
-        [char]
-        [ValidateSet('e','x')]
-        $Mode,
+        [string]
+        [ValidateSet('e','Extract',
+                     'x','eXtract with full paths',
+                     'l','List')]
+        $Command,
 
         [parameter(Position                       =2,
                    ValueFromPipelineByPropertyname=$true)]
@@ -176,6 +229,11 @@ function Get-7zExtractArgs
         [Alias('so')]
         $WriteDataToStdout,
 
+        [parameter(ValueFromPipelineByPropertyname=$true)]
+        [switch]
+        [Alias('slt')]
+        $ShowTechnicalInfo,
+
         [parameter(ValueFromPipelineByPropertyName=$true)]
         [string]
         [Alias('t')]
@@ -193,9 +251,9 @@ function Get-7zExtractArgs
     )
     process
     {
-        Assert-Valid7zExtractArgsParams @PSBoundParameters
+        Assert-Valid7zArgsParams @PSBoundParameters
 
-        $switches = (Get-Command Get-7zExtractArgs).Parameters.Values |
+        $switches = (Get-Command Get-7zArgs).Parameters.Values |
             ? {
                 $_.SwitchParameter -and
                 $_.Name -notin [System.Management.Automation.PSCmdlet]::CommonParameters
@@ -203,7 +261,7 @@ function Get-7zExtractArgs
             ? { Get-Variable $_.Name -ValueOnly } |
             % { $_.Aliases[0] }
 
-        $psParameters = (Get-Command Get-7zExtractArgs).Parameters.Values |
+        $psParameters = (Get-Command Get-7zArgs).Parameters.Values |
             ? {$_.Name -notin [System.Management.Automation.PSCmdlet]::CommonParameters}
 
         $switches = $psParameters |
@@ -232,7 +290,7 @@ function Get-7zExtractArgs
 
 
         $7zParameters = [System.Collections.ArrayList]@()
-        $7zParameters += $Mode
+        $7zParameters += $commandCharLookup.$Command
         if ( $ArchivePath )
         {
             $7zParameters += $ArchivePath

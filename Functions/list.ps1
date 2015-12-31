@@ -235,6 +235,7 @@ function ConvertFrom-7zFileListLine
         $h = @{}
         'Date','Time','Attr','Size','Compressed','Name' |
             % { $h.$_ = [string]$groups[$_] }
+        $h.IsFile = $h.Attr[0] -eq '.'
         New-Object psobject -Property $h
     }
 }

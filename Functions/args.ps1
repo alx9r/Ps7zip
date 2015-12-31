@@ -285,7 +285,7 @@ function Get-7zArgs
         {
             Get-Variable $parameter.Name -ValueOnly |
                 % {$_} |
-                % { "-$($parameter.Aliases[0])$_" }
+                % { "-$($parameter.Aliases[0])$($_ | ConvertTo-QuotedFilename)" }
         }
 
 
@@ -293,7 +293,7 @@ function Get-7zArgs
         $7zParameters += $commandCharLookup.$Command
         if ( $ArchivePath )
         {
-            $7zParameters += $ArchivePath
+            $7zParameters += $ArchivePath | ConvertTo-QuotedFilename
         }
         else
         {
@@ -303,5 +303,26 @@ function Get-7zArgs
         $7zParameters += $valueParams
 
         ($7zParameters | ? {$_}) -join ' '
+    }
+}
+function ConvertTo-QuotedFilename
+{
+    [CmdletBinding()]
+    param
+    (
+        [parameter(Mandatory                      = $true,
+                   Position                       = 1,
+                   ValueFromPipeline              = $true,
+                   ValueFromPipelineByPropertyname= $true)]
+        [string]
+        $Filename
+    )
+    process
+    {
+        if ( $Filename -match '[ \*]' )
+        {
+            return "`"$Filename`""
+        }
+        $Filename
     }
 }

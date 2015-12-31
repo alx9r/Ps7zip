@@ -65,4 +65,28 @@ Describe Get-7zArgs {
 
         $r | Should be 'x -an -ai!archive.zip'
     }
+    It 'quotes filenames with spaces.' {
+        $splat = @{
+            ArchivePath = 'has spaces.zip'
+            IncludeFiles = 'is*wildcard.txt'
+        }
+        $r = Get-7zArgs x @splat
+
+        $r | Should be 'x "has spaces.zip" -i!"is*wildcard.txt"'
+    }
+}
+
+Describe ConvertTo-QuotedFilename {
+    It 'does nothing to normal filenames.' {
+        $r = 'file.txt' | ConvertTo-QuotedFileName
+        $r | Should be 'file.txt'
+    }
+    It 'quotes filenames with spaces.' {
+        $r = 'has space.txt' | ConvertTo-QuotedFilename
+        $r | Should be '"has space.txt"'
+    }
+    It 'quotes wildcards.' {
+        $r = 'has*wildcard.txt' | ConvertTo-QuotedFilename
+        $r | Should be '"has*wildcard.txt"'
+    }
 }

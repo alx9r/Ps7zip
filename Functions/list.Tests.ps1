@@ -102,9 +102,16 @@ Describe ConvertFrom-7zFileListLine {
         $r.Date | Should be '2014-05-29'
         $r.Time | Should be '15:19:35'
         $r.Attr | Should be '....A'
+        $r.IsFile | Should be $true
         $r.Size | Should be '4249928'
         $r.Compressed | Should be '1516467'
         $r.Name | Should be 'setup.exe'
+    }
+    It 'correctly identifies folders' {
+        $r = '2013-09-11 04:15:15 D....            0            0  EULA' |
+            ConvertFrom-7zFileListLine
+
+        $r.IsFile | Should be $false
     }
     It 'correctly handles missing "Compressed" field.' {
         $r = '2007-11-07 08:44:20 ....A       855040               .\install.exe' |
@@ -113,6 +120,7 @@ Describe ConvertFrom-7zFileListLine {
         $r.Date | Should be '2007-11-07'
         $r.Time | Should be '08:44:20'
         $r.Attr | Should be '....A'
+        $r.IsFile | Should be $true
         $r.Size | Should be '855040'
         $r.Compressed | Should beNullOrEmpty
         $r.Name | Should be '.\install.exe'

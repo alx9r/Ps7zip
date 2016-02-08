@@ -59,6 +59,12 @@ Converts the output of 7z l to a rich object.
                 $h.CommandNoticeLine = $line
                 $h.CommandNotice = $line | ConvertFrom-7zCommandNoticeLine
                 $phase = 'extract attributes'
+                $h.AttributeSections.Add(
+                    @{
+                        Attributes = @{}
+                        AttributeLines = [System.Collections.ArrayList]@()
+                    }
+                ) | Out-Null
                 continue
             }
 

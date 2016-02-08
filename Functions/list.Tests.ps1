@@ -1,7 +1,7 @@
 Import-Module Ps7zip -Force
 
 Describe ConvertFrom-7zListStream {
-    It 'converts.' {
+    It 'converts (1).' {
         $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample.xml" |
             Resolve-Path |
             Import-Clixml
@@ -15,19 +15,40 @@ Describe ConvertFrom-7zListStream {
         $r.CommandNotice.Command | Should be 'Listing'
         $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
 
-        $r.AttributeSections.Count | Should be 3
-        $r.AttributeSections[0].Attributes.Count | Should be 25
-        $r.AttributeSections[0].AttributeLines.Count | Should be 25
-        $r.AttributeSections[1].Attributes.Count | Should be 4
-        $r.AttributeSections[1].AttributeLines.Count | Should be 4
-        $r.AttributeSections[2].Attributes.Count | Should be 5
-        $r.AttributeSections[2].AttributeLines.Count | Should be 5
-        $r.AttributeSections[0].Attributes.CPU | Should be 'x86'
-        $r.AttributeSections[0].Attributes.Type | Should be 'PE'
+        $r.AttributeSections.Count | Should be 4
+        $r.AttributeSections[1].Attributes.Count | Should be 25
+        $r.AttributeSections[1].AttributeLines.Count | Should be 25
+        $r.AttributeSections[2].Attributes.Count | Should be 4
+        $r.AttributeSections[2].AttributeLines.Count | Should be 4
+        $r.AttributeSections[3].Attributes.Count | Should be 5
+        $r.AttributeSections[3].AttributeLines.Count | Should be 5
+        $r.AttributeSections[1].Attributes.CPU | Should be 'x86'
+        $r.AttributeSections[1].Attributes.Type | Should be 'PE'
 
         $r.Files[0].Name | Should be 'vc_red.cab'
         $r.Files[0].Size | Should be '1927956'
         $r.Files.Count | Should be '40'
+    }
+    It 'converts (2).' {
+        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample2.xml" |
+            Resolve-Path |
+            Import-Clixml
+
+        $r = $stream | ConvertFrom-7zListStream -ParentData
+
+        $r.AttributeSections.Count | Should be 4
+        $r.AttributeSections[0].Attributes.Count | Should be 7
+        $r.AttributeSections[0].AttributeLines.Count | Should be 7
+        $r.AttributeSections[1].Attributes.Count | Should be 17
+        $r.AttributeSections[1].AttributeLines.Count | Should be 17
+        $r.AttributeSections[2].Attributes.Count | Should be 7
+        $r.AttributeSections[2].AttributeLines.Count | Should be 8
+        $r.AttributeSections[0].Attributes.CPU | Should be 'x86'
+        $r.AttributeSections[0].Attributes.Type | Should be 'PE'
+
+        $r.Files[0].Name | Should be 'windows\SystemsManagementx64\1031.mst'
+        $r.Files[0].Size | Should be '188416'
+        $r.Files.Count | Should be '10'
     }
     It 'throws.' {
         $stream = 'line 1','line 2'

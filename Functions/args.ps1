@@ -107,7 +107,12 @@ function Assert-Valid7zArgsParams
         [parameter(ValueFromPipelineByPropertyname=$true)]
         [string[]]
         [Alias('x@')]
-        $ExcludeListFiles
+        $ExcludeListFiles,
+
+        [parameter(ValueFromPipelineByPropertyname=$true)]
+        [switch]
+        [Alias('y')]
+        $AssumeYes
     )
     process
     {
@@ -247,7 +252,12 @@ function Get-7zArgs
         [parameter(ValueFromPipelineByPropertyname=$true)]
         [string[]]
         [Alias('x@')]
-        $ExcludeListFiles
+        $ExcludeListFiles,
+
+        [parameter(ValueFromPipelineByPropertyname=$true)]
+        [switch]
+        [Alias('y')]
+        $AssumeYes
     )
     process
     {

@@ -39,6 +39,7 @@ Converts the output of 7z l to a rich object.
         $phase = 'find version notice'
         foreach ( $line in $accumulator )
         {
+            Out-Null
             if
             (
                 $phase -eq 'find version notice' -and
@@ -260,6 +261,6 @@ function Test-7zFileListSummaryLine
     )
     process
     {
-        $Line -match '^ +[0-9]+ +[0-9]+ +[0-9]+ files, [0-9]+ folders$'
+        $Line -match '^([0-9]*-[0-9]*-[0-9]* [0-9]*:[0-9]*:[0-9]*)? +[0-9]+ +[0-9]+ +[0-9]+ files(, [0-9]+ folders)?$'
     }
 }

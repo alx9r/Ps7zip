@@ -1,4 +1,4 @@
-$versionNoticePattern = '^7-Zip \[(?<Platform>64|32|86)] (?<Version>[0-9a-zA-Z\.]*) *Copyright \(c\) +(?<CopyrightDate>[0-9,\-]*) +Igor Pavlov +(?<Date>[0-9\-]*).*$'
+$versionNoticePattern = '^7-Zip \[(?<Platform>64|32|86)] (?<Version>[0-9a-zA-Z\.]*) *(: )?Copyright \(c\) (?<CopyrightDate>[0-9,\-]*) Igor Pavlov  ?(: )?(?<Date>[0-9\-]*)$'
 function Test-7zVersionNoticeLine
 {
     [CmdletBinding()]
@@ -39,7 +39,7 @@ function ConvertFrom-7zVersionNoticeLine
         New-Object psobject -Property $h
     }
 }
-$commandNoticePattern = '^(?<Command>Listing|Processing) archive: (?<ArchiveName>.*)$'
+$commandNoticePattern = '^(?<Command>Extracting|Listing|Processing) archive: (?<ArchiveName>.*)$'
 function Test-7zCommandNoticeLine
 {
     [CmdletBinding()]

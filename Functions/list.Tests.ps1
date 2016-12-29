@@ -1,70 +1,75 @@
 Import-Module Ps7zip -Force
 
 Describe ConvertFrom-7zListStream {
-    It 'converts (1).' {
-        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample.xml" |
-            Resolve-Path |
-            Import-Clixml
+    foreach ( $version in '9.20','15.12' )
+    {
+        Context $version {
+            It 'converts (1).' {
+                $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample-$version.xml" |
+                    Resolve-Path |
+                    Import-Clixml
 
-        $r = $stream | ConvertFrom-7zListStream -ParentData
+                $r = $stream | ConvertFrom-7zListStream -ParentData
 
-        $r -is [pscustomobject] | Should be $true
+                $r -is [pscustomobject] | Should be $true
 
-        $r.VersionNotice | Should be '7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18'
-        $r.CommandNoticeLine | Should be 'Listing archive: .\vcredist_x64.exe'
-        $r.CommandNotice.Command | Should be 'Listing'
-        $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
+                $r.VersionNotice | Should match '7-Zip \[64\]'
+                $r.CommandNoticeLine | Should be 'Listing archive: .\vcredist_x64.exe'
+                $r.CommandNotice.Command | Should be 'Listing'
+                $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
 
-        $r.AttributeSections.Count | Should be 4
-        $r.AttributeSections[1].Attributes.Count | Should be 25
-        $r.AttributeSections[1].AttributeLines.Count | Should be 25
-        $r.AttributeSections[2].Attributes.Count | Should be 4
-        $r.AttributeSections[2].AttributeLines.Count | Should be 4
-        $r.AttributeSections[3].Attributes.Count | Should be 5
-        $r.AttributeSections[3].AttributeLines.Count | Should be 5
-        $r.AttributeSections[1].Attributes.CPU | Should be 'x86'
-        $r.AttributeSections[1].Attributes.Type | Should be 'PE'
+                $r.AttributeSections.Count | Should be 4
+                $r.AttributeSections[1].Attributes.Count | Should match '(25|27)'
+                $r.AttributeSections[1].AttributeLines.Count | Should match '(25|27)'
+                $r.AttributeSections[2].Attributes.Count | Should match '(4|5)'
+                $r.AttributeSections[2].AttributeLines.Count | Should match '(4|5)'
+                $r.AttributeSections[3].Attributes.Count | Should match '(5|10)'
+                $r.AttributeSections[3].AttributeLines.Count | Should match '(5|10)'
+                $r.AttributeSections[1].Attributes.CPU | Should be 'x86'
+                $r.AttributeSections[1].Attributes.Type | Should be 'PE'
 
-        $r.Files[0].Name | Should be 'vc_red.cab'
-        $r.Files[0].Size | Should be '1927956'
-        $r.Files.Count | Should be '40'
-    }
-    It 'converts (2).' {
-        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample2.xml" |
-            Resolve-Path |
-            Import-Clixml
+                $r.Files[0].Name | Should be 'vc_red.cab'
+                $r.Files[0].Size | Should be '1927956'
+                $r.Files.Count | Should be '40'
+            }
+            It 'outputs list of file attribute objects.' {
+                $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample-$version.xml" |
+                    Resolve-Path |
+                    Import-Clixml
 
-        $r = $stream | ConvertFrom-7zListStream -ParentData
+                $r = $stream | ConvertFrom-7zListStream
 
-        $r.AttributeSections.Count | Should be 4
-        $r.AttributeSections[0].Attributes.Count | Should be 7
-        $r.AttributeSections[0].AttributeLines.Count | Should be 7
-        $r.AttributeSections[1].Attributes.Count | Should be 17
-        $r.AttributeSections[1].AttributeLines.Count | Should be 17
-        $r.AttributeSections[2].Attributes.Count | Should be 7
-        $r.AttributeSections[2].AttributeLines.Count | Should be 8
-        $r.AttributeSections[0].Attributes.CPU | Should be 'x86'
-        $r.AttributeSections[0].Attributes.Type | Should be 'PE'
+                $r -is [array] | Should be $true
+                $r.Count | Should be 40
+                $r[0] -is [pscustomobject] | Should be $true
+            }
+            It 'converts (2).' {
+                $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample2.xml" |
+                    Resolve-Path |
+                    Import-Clixml
 
-        $r.Files[0].Name | Should be 'windows\SystemsManagementx64\1031.mst'
-        $r.Files[0].Size | Should be '188416'
-        $r.Files.Count | Should be '10'
+                $r = $stream | ConvertFrom-7zListStream -ParentData
+
+                $r.AttributeSections.Count | Should be 4
+                $r.AttributeSections[0].Attributes.Count | Should be 7
+                $r.AttributeSections[0].AttributeLines.Count | Should be 7
+                $r.AttributeSections[1].Attributes.Count | Should be 17
+                $r.AttributeSections[1].AttributeLines.Count | Should be 17
+                $r.AttributeSections[2].Attributes.Count | Should be 7
+                $r.AttributeSections[2].AttributeLines.Count | Should be 8
+                $r.AttributeSections[0].Attributes.CPU | Should be 'x86'
+                $r.AttributeSections[0].Attributes.Type | Should be 'PE'
+
+                $r.Files[0].Name | Should be 'windows\SystemsManagementx64\1031.mst'
+                $r.Files[0].Size | Should be '188416'
+                $r.Files.Count | Should be '10'
+            }
+        }
     }
     It 'throws.' {
         $stream = 'line 1','line 2'
         {$stream | ConvertFrom-7zListStream} |
             Should throw 'Error parsing 7zStream.'
-    }
-    It 'outputs list of file attribute objects.' {
-        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\listSample.xml" |
-            Resolve-Path |
-            Import-Clixml
-
-        $r = $stream | ConvertFrom-7zListStream
-
-        $r -is [array] | Should be $true
-        $r.Count | Should be 40
-        $r[0] -is [pscustomobject] | Should be $true
     }
 }
 Describe Test-7zFileListHeadings {
@@ -152,9 +157,18 @@ Describe Test-7zFileListSummaryLine {
         $r = 'Not valid.' | Test-7zFileListSummaryLine
         $r | Should be $false
     }
-    It 'true.' {
-        $r = '                              50782596     41805376  36 files, 1 folders' |
-            Test-7zFileListSummaryLine
-        $r | Should be $true
+    foreach ( $values in @(
+            @('9.20','                              50782596     41805376  36 files, 1 folders'),
+            @('15.12','2007-11-07 08:53:12            4104207      2373640  40 files')
+        )
+    )
+    {
+        $version,$line = $values
+        Context $version {
+            It 'true.' {
+                $r = $line | Test-7zFileListSummaryLine
+                $r | Should be $true
+            }
+        }
     }
 }

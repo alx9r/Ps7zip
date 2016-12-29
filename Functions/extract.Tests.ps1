@@ -1,60 +1,100 @@
 Import-Module Ps7zip -Force
 
-Describe ConvertFrom-7zProcessingStream {
-    It 'converts with error.' {
-        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractErrorSample.xml" |
-            Resolve-Path |
-            Import-Clixml
+Describe 'ConvertFrom-7zProcessingStream error' {
+    Context '9.20' {
+        It 'converts with error.' {
+            $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractErrorSample-9.20.xml" |
+                Resolve-Path |
+                Import-Clixml
 
-        $r = $stream | ConvertFrom-7zProcessingStream -ParentData
+            $r = $stream | ConvertFrom-7zProcessingStream -ParentData
 
-        $r -is [pscustomobject] | Should be $true
+            $r -is [pscustomobject] | Should be $true
 
-        $r.VersionNotice | Should be '7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18'
-        $r.CommandNoticeLine | Should be 'Processing archive: .\vcredist_x64.exe'
-        $r.CommandNotice.Command | Should be 'Processing'
-        $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
+            $r.VersionNotice | Should be '7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18'
+            $r.CommandNoticeLine | Should be 'Processing archive: .\vcredist_x64.exe'
+            $r.CommandNotice.Command | Should be 'Processing'
+            $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
 
-        $r.Summary | Should be 'Failure'
-        $r.Results | Should beNullOrEmpty
-        $r.Messages.Errors.Count | Should be 1
-        $r.Messages.Errors[0] | Should be 'Can not delete output file eula.1028.txt'
+            $r.Summary | Should be 'Failure'
+            $r.Results | Should beNullOrEmpty
+            $r.Messages.Errors.Count | Should be 1
+            $r.Messages.Errors[0] | Should be 'Can not delete output file eula.1028.txt'
+        }
+        It 'throws on error.' {
+            $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractErrorSample-9.20.xml" |
+                Resolve-Path |
+                Import-Clixml
+
+            { $stream | ConvertFrom-7zProcessingStream } |
+                Should throw 'Can not delete output file eula.1028.txt'
+        }
     }
-    It 'converts without error.' {
-        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractSample.xml" |
-            Resolve-Path |
-            Import-Clixml
+    Context '15.12' {
+        It 'converts with error.' {
+            $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractErrorSample-15.12.xml" |
+                Resolve-Path |
+                Import-Clixml
 
-        $r = $stream | ConvertFrom-7zProcessingStream -ParentData
+            $r = $stream | ConvertFrom-7zProcessingStream -ParentData
 
-        $r.Summary | Should be 'Success'
-        $r.Results.Files | Should be '40'
-        $r.Results.Size | Should be '4104207'
-        $r.Messages.Errors.Count | Should be 0
+            $r -is [pscustomobject] | Should be $true
+
+            $r.VersionNotice | Should be '7-Zip [64] 15.12 : Copyright (c) 1999-2015 Igor Pavlov : 2015-11-19'
+            $r.CommandNoticeLine | Should be 'Extracting archive: .\vcredist_x64.exe'
+            $r.CommandNotice.Command | Should be 'Extracting'
+            $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'
+
+            $r.Summary | Should be 'Failure'
+            $r.Results | Should beNullOrEmpty
+            $r.Messages.Errors | Should beNullOrEmpty
+        }
+        It 'throws on error.' {
+            $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractErrorSample-9.20.xml" |
+                Resolve-Path |
+                Import-Clixml
+
+            { $stream | ConvertFrom-7zProcessingStream } |
+                Should throw 'Can not delete output file eula.1028.txt'
+        }
     }
     It 'throws on bad file.' {
         $stream = 'line 1','line 2'
         {$stream | ConvertFrom-7zProcessingStream} |
             Should throw 'Error parsing 7zStream.'
     }
-    It 'throws on error.' {
-        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractErrorSample.xml" |
-            Resolve-Path |
-            Import-Clixml
+}
+Describe 'ConvertFrom-7zProcessingStream' {
+    foreach ( $version in '9.20','15.12' )
+    {
+        Context $version {
+            It 'converts without error.' {
+                $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractSample-$version.xml" |
+                    Resolve-Path |
+                    Import-Clixml
 
-        { $stream | ConvertFrom-7zProcessingStream } |
-            Should throw 'Can not delete output file eula.1028.txt'
-    }
-    It 'outputs list of file attribute objects.' {
-        $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractSample.xml" |
-            Resolve-Path |
-            Import-Clixml
+                $r = $stream | ConvertFrom-7zProcessingStream -ParentData
 
-        $r = $stream | ConvertFrom-7zProcessingStream
+                $r.Summary | Should be 'Success'
+                $r.Results.Files | Should be '40'
+                $r.Results.Size | Should be '4104207'
+                $r.Messages.Errors.Count | Should be 0
+            }
+            if ( $version -eq '9.20' )
+            {
+                It 'outputs list of file attribute objects.' {
+                    $stream = "$($PSCommandPath | Split-Path -Parent)\..\Resources\extractSample-$version.xml" |
+                        Resolve-Path |
+                        Import-Clixml
 
-        $r -is [array] | Should be $true
-        $r.Count | Should be 40
-        $r[0] -is [pscustomobject] | Should be $true
+                    $r = $stream | ConvertFrom-7zProcessingStream
+
+                    $r -is [array] | Should be $true
+                    $r.Count | Should be 40
+                    $r[0] -is [pscustomobject] | Should be $true
+                }
+            }
+        }
     }
 }
 Describe Test-7zProcessingLine {

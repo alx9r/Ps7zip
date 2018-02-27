@@ -34,7 +34,7 @@ Describe ConvertFrom-7zVersionNoticeLine {
 
                 $r -is [pscustomobject] | Should be $true
 
-                $r.Platform | Should -match '64|x64'
+                $r.Platform | Should match '64|x64'
                 $r.Version | Should be $version
                 $r.CopyrightDate | Should match '1999-201[058]'
                 $r.Date | Should match '(2010-11-18|2015-11-19|2018-01-28)'

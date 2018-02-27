@@ -1,7 +1,7 @@
 Import-Module Ps7zip -Force
 
 Describe ConvertFrom-7zListStream {
-    foreach ( $version in '9.20','15.12' )
+    foreach ( $version in '9.20','15.12','18.01' )
     {
         Context $version {
             It 'converts (1).' {
@@ -13,7 +13,7 @@ Describe ConvertFrom-7zListStream {
 
                 $r -is [pscustomobject] | Should be $true
 
-                $r.VersionNotice | Should match '7-Zip \[64\]'
+                $r.VersionNotice | Should match '7-Zip.*Copyright \(c\).*Igor Pavlov'
                 $r.CommandNoticeLine | Should be 'Listing archive: .\vcredist_x64.exe'
                 $r.CommandNotice.Command | Should be 'Listing'
                 $r.CommandNotice.ArchiveName | Should be '.\vcredist_x64.exe'

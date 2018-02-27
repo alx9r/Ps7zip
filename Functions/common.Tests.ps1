@@ -2,7 +2,8 @@ Import-Module Ps7zip -Force
 
 $versionLineValues = @(
     @('9.20','7-Zip [64] 9.20  Copyright (c) 1999-2010 Igor Pavlov  2010-11-18'),
-    @('15.12','7-Zip [64] 15.12 : Copyright (c) 1999-2015 Igor Pavlov : 2015-11-19')
+    @('15.12','7-Zip [64] 15.12 : Copyright (c) 1999-2015 Igor Pavlov : 2015-11-19'),
+    @('18.01','7-Zip 18.01 (x64) : Copyright (c) 1999-2018 Igor Pavlov : 2018-01-28')
 )
 
 Describe Test-7zVersionNoticeLine {
@@ -33,10 +34,10 @@ Describe ConvertFrom-7zVersionNoticeLine {
 
                 $r -is [pscustomobject] | Should be $true
 
-                $r.Platform | Should be '64'
+                $r.Platform | Should -match '64|x64'
                 $r.Version | Should be $version
-                $r.CopyrightDate | Should match '1999-201[05]'
-                $r.Date | Should match '(2010-11-18|2015-11-19)'
+                $r.CopyrightDate | Should match '1999-201[058]'
+                $r.Date | Should match '(2010-11-18|2015-11-19|2018-01-28)'
             }
         }
     }
